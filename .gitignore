@@ -1,0 +1,19 @@
+# Editor settings
+.vscode/
+
+# Linters / formatters
+.ruff_cache/
+
+# Environment variables (credentials)
+.env
+
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv

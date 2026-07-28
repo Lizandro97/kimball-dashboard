@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Superstore Inc. — BI Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+</head>
+<body>
+  <!-- Loading overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <div class="layout">
+    <!-- ── Sidebar ──────────────────────────────────────────── -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-inner">
+        <div class="sidebar-head">
+          <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <div class="sidebar-brand">
+            <span class="brand-mark">S</span>
+            <div class="brand-text">
+              <div class="brand-name">Superstore</div>
+              <div class="brand-sub">BI Dashboard</div>
+            </div>
+          </div>
+        </div>
+
+        <nav class="sidebar-nav">
+          <a class="nav-item active" href="#overview" data-page="overview">
+            <span class="nav-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            </span>
+            <span class="nav-label">Resumen</span>
+          </a>
+          <a class="nav-item" href="#sales" data-page="sales">
+            <span class="nav-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            </span>
+            <span class="nav-label">Ventas</span>
+          </a>
+          <a class="nav-item" href="#profitability" data-page="profitability">
+            <span class="nav-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </span>
+            <span class="nav-label">Rentabilidad</span>
+          </a>
+          <a class="nav-item" href="#customers" data-page="customers">
+            <span class="nav-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </span>
+            <span class="nav-label">Clientes</span>
+          </a>
+          <a class="nav-item" href="#shipping" data-page="shipping">
+            <span class="nav-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            </span>
+            <span class="nav-label">Envios</span>
+          </a>
+        </nav>
+
+        <div class="sidebar-footer">
+          <div class="sidebar-stat">
+            <span class="sidebar-stat-label">Ordenes / Lineas</span>
+            <span class="sidebar-stat-value" id="sidebarCount">—</span>
+          </div>
+          <div class="sidebar-stat-bar">
+            <div class="sidebar-stat-bar-fill" id="sidebarBar" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ── Main ──────────────────────────────────────────────── -->
+    <div class="main">
+      <header class="main-header">
+        <div class="header-left">
+          <h1 class="page-title" id="pageTitle">Resumen Ejecutivo</h1>
+        </div>
+        <div class="header-right">
+          <span class="filter-badge" id="filterBadge">Sin filtros</span>
+          <button class="theme-btn" id="themeBtn">
+            <svg class="icon-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+            <svg class="icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            <span class="theme-label">Tema oscuro</span>
+          </button>
+        </div>
+      </header>
+
+      <div class="main-content" id="mainContent">
+
+        <!-- ── Overview ───────────────────────────────────────── -->
+        <div class="page active" id="page-overview">
+          <h1 class="page-title-main">Resumen Ejecutivo</h1>
+          <p class="page-subtitle" id="ovSubtitle">Todas las regiones · Todos los anos</p>
+          <div class="page-actions">
+            <div class="filter-bar">
+              <div class="filter-group">
+                <span class="filter-label">Región</span>
+                <select class="filter-region"></select>
+              </div>
+              <div class="filter-group">
+                <span class="filter-label">Año</span>
+                <select class="filter-year"></select>
+              </div>
+              <div class="filter-group">
+                <span class="filter-label">Segmento</span>
+                <select class="filter-segment"></select>
+              </div>
+            </div>
+            <button class="export-btn" data-module="overview" title="Exportar Excel">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Exportar Excel
+            </button>
+          </div>
+
+          <div class="kpi-grid" id="kpiRow"></div>
+
+          <div class="chart-grid-3">
+            <div class="chart-card" id="chartRegionDonut"></div>
+            <div class="chart-card" id="chartCategoryBar"></div>
+            <div class="table-card">
+              <div class="section-header">
+                <div class="section-label">Top 5 Productos</div>
+              </div>
+              <div id="top5ProductsList"></div>
+            </div>
+          </div>
+
+          <div class="section-divider"></div>
+
+          <div class="section-header">
+            <div class="section-label">Tendencia de Ingresos</div>
+          </div>
+          <div class="chart-card" id="chartTrend"></div>
+
+          <div class="section-divider"></div>
+
+          <div class="section-header">
+            <div class="section-label">Analisis 80/20 y Tendencia Mensual</div>
+          </div>
+          <div class="chart-grid-2">
+            <div class="callout" id="paretoCard"></div>
+            <div class="callout" id="momCard"></div>
+          </div>
+
+          <div class="section-divider"></div>
+
+          <div class="section-header">
+            <div class="section-label">Alertas</div>
+          </div>
+          <div class="alert-grid" id="alertRow"></div>
+        </div>
+
+        <!-- ── Sales ──────────────────────────────────────────── -->
+        <div class="page" id="page-sales">
+          <h1 class="page-title-main">Analisis de Ventas</h1>
+          <p class="page-subtitle" id="salesSubtitle">Todas las regiones · Todos los anos</p>
+          <div class="page-actions">
+            <div class="filter-bar">
+              <div class="filter-group">
+                <span class="filter-label">Región</span>
+                <select class="filter-region"></select>
+              </div>
+              <div class="filter-group">
+                <span class="filter-label">Año</span>
+                <select class="filter-year"></select>
+              </div>
+              <div class="filter-group">
+                <span class="filter-label">Segmento</span>
+                <select class="filter-segment"></select>
+              </div>
+            </div>
+            <button class="export-btn" data-module="sales" title="Exportar Excel">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Exportar Excel
+            </button>
+          </div>
+
+          <div class="chart-grid-2">
+            <div class="chart-card" id="chartSalesCat"></div>
+            <div class="chart-card" id="chartSalesReg"></div>
+          </div>
+
+          <div class="chart-section">
+            <div class="section-header">
+              <div class="section-label">Tendencia Mensual</div>
+            </div>
+            <div class="chart-card" id="chartSalesMonthly"></div>
+          </div>
+
+          <div class="section-divider"></div>
+
+          <div class="chart-grid-2">
+            <div class="chart-section">
+              <div class="section-header">
+                <div class="section-label">Top 15 Subcategorias</div>
+              </div>
+              <div class="chart-card" id="chartSalesSubcat"></div>
+            </div>
+            <div class="chart-section">
+              <div class="section-header">
+                <div class="section-label">Mapa por Estado</div>
+              </div>
+              <div class="chart-card" id="chartSalesMap"></div>
+            </div>
+          </div>
+
+          <div class="section-divider"></div>
+
+          <div class="chart-section">
+            <div class="section-header">
+              <div class="section-label">Top 15 Ciudades</div>
+            </div>
+            <div class="chart-card" id="chartSalesCity"></div>
+          </div>
+
+          <div class="section-divider"></div>
+
+          <div class="section-header">
+            <div class="section-label">Top 10 Productos</div>
+          </div>
+          <div class="table-card" id="topProductsTable"></div>
+        </div>
+
+        <!-- ── Profitability ──────────────────────────────────── -->
+        <div class="page" id="page-profitability">
+          <h1 class="page-title-main">Analisis de Rentabilidad</h1>
+          <p class="page-subtitle" id="profSubtitle">Todas las regiones · Todos los anos</p>
+          <div class="page-actions">
+            <div class="filter-bar">
+              <div class="filter-group">
+                <span class="filter-label">Región</span>
+                <select class="filter-region"></select>
+              </div>
+              <div class="filter-group">
+                <span class="filter-label">Año</span>
+                <select class="filter-year"></select>
+              </div>
+              <div class="filter-group">
+                <span class="filter-label">Segmento</span>
+                <select class="filter-segment"></select>
+              </div>
+            </div>
+            <button class="export-btn" data-module="profitability" title="Exportar Excel">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Exportar Excel
+            </button>
+          </div>
+
+          <div class="callout" id="discountCallout"></div>
+
+          <div class="chart-grid-2">
+            <div class="chart-card" id="chartProfitDiscount"></div>
+            <div class="chart-card">
+              <div class="section-header">
+                <div class="section-label">Niveles de Descuento</div>
+              </div>
+              <div class="tier-list" id="tierCards"></div>
+            </div>
+          </div>
+
+          <div class="section-divider"></div>
+
+          <div class="section-header">
+            <div class="section-label">Utilidad por Region y Categoria</div>
+          </div>
+          <div class="chart-card" id="chartProfitRegCat"></div>
+        </div>
+
+        <!-- ── Customers ──────────────────────────────────────── -->
+        <div class="page" id="page-customers">
+          <h1 class="page-title-main">Analisis de Clientes</h1>
+          <p class="page-subtitle" id="custSubtitle">Todas las regiones · Todos los anos</p>
+          <div class="page-actions">
+            <div class="filter-bar">
+              <div class="filter-group">
+                <span class="filter-label">Región</span>
+                <select class="filter-region"></select>
+              </div>
+              <div class="filter-group">
+                <span class="filter-label">Año</span>
+                <select class="filter-year"></select>
+              </div>
+              <div class="filter-group">
+                <span class="filter-label">Segmento</span>
+                <select class="filter-segment"></select>
+              </div>
+            </div>
+            <button class="export-btn" data-module="customers" title="Exportar Excel">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Exportar Excel
+            </button>
+          </div>
+
+          <div class="segment-cards" id="segmentCards"></div>
+
+          <div class="chart-grid-2">
+            <div class="chart-card" id="chartSegment"></div>
+            <div class="chart-card" id="chartSegmentMargin"></div>
+          </div>
+
+          <div class="section-divider"></div>
+
+          <div class="chart-section">
+            <div class="section-header">
+              <div class="section-label">Frecuencia de Compra</div>
+            </div>
+            <div class="chart-card" id="chartFrequency"></div>
+          </div>
+
+          <div class="section-divider"></div>
+
+          <div class="section-header">
+            <div class="section-label">Top 10 Clientes por Ingresos</div>
+          </div>
+          <div class="table-card" id="topCustomersTable"></div>
+
+          <div class="section-divider"></div>
+
+          <div class="callout" id="customerInsight"></div>
+        </div>
+
+        <!-- ── Shipping ───────────────────────────────────────── -->
+        <div class="page" id="page-shipping">
+          <h1 class="page-title-main">Analisis de Envios</h1>
+          <p class="page-subtitle" id="shipSubtitle">Todas las regiones · Todos los anos</p>
+          <div class="page-actions">
+            <div class="filter-bar">
+              <div class="filter-group">
+                <span class="filter-label">Región</span>
+                <select class="filter-region"></select>
+              </div>
+              <div class="filter-group">
+                <span class="filter-label">Año</span>
+                <select class="filter-year"></select>
+              </div>
+              <div class="filter-group">
+                <span class="filter-label">Segmento</span>
+                <select class="filter-segment"></select>
+              </div>
+            </div>
+            <button class="export-btn" data-module="shipping" title="Exportar Excel">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Exportar Excel
+            </button>
+          </div>
+
+          <div class="kpi-grid" id="shipStatsRow"></div>
+
+          <div class="section-divider"></div>
+
+          <div class="section-header">
+            <div class="section-label">Rendimiento por Region</div>
+          </div>
+          <div class="region-kpi-grid" id="shipRegionKpis"></div>
+
+          <div class="chart-grid-2">
+            <div class="chart-card" id="chartShipByRegion"></div>
+            <div class="chart-card" id="chartShipModeImpact"></div>
+          </div>
+
+          <div class="section-divider"></div>
+
+          <div class="section-header">
+            <div class="section-label">Distribución de Tiempos de Entrega</div>
+          </div>
+          <div class="chart-card" id="chartShipHistogram"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/render.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+[project]
+name = "superstore-dashboard"
+version = "0.1.0"
+description = "Superstore BI Dashboard — Kimball DW/BI"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.140.7",
+    "matplotlib>=3.11.1",
+    "numpy>=2.5.1",
+    "openpyxl>=3.1.5",
+    "pandas>=3.0.5",
+    "playwright>=1.61.0",
+    "plotly>=6.9.0",
+    "psycopg2-binary>=2.9.12",
+    "python-dotenv>=1.2.2",
+    "sqlalchemy>=2.0.51",
+    "uvicorn>=0.51.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.16.0",
+]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "S", "B", "BLE", "C4", "DTZ", "PLW"]
+ignore = [
+    "DTZ005",   # datetime.now() without tz — acceptable for ETL timestamps
+    "DTZ007",   # strptime without tz — backup file names, local only
+    "DTZ011",   # date.today() — ETL date partitioning, local is correct
+    "BLE001",   # broad exception catch — intentional in health checks & ETL fallbacks
+    "S110",     # try-except-pass — intentional for DROP IF EXISTS
+    "S104",     # binding to all interfaces — intended for Docker/deployment
+    "S603",     # subprocess call — trusted internal scripts only
+    "S607",     # partial executable path — pg_dump is always in PATH
+    "PLW1510",  # subprocess.run without check — error handling via returncode
+    "PLW2901",  # loop variable overwritten — intentional reassignment pattern
+    "B905",     # zip() without strict — unequal-length input is handled
+]
+
+[tool.ruff.lint.per-file-ignores]
+"etl/*" = ["S"]   # ETL scripts need subprocess, bare excepts
