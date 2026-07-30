@@ -2,12 +2,10 @@
 
 **Grupo 5**
 
-| Integrante           | Rol |
-| -------------------- | --- |
-| Azul Huilahuaña      | —   |
-| Lizandro Mendoza     | —   |
-| Diego Torres         | —   |
-| Walter Vilca         | —   |
+- Lizandro Mendoza
+- Azul Huilahuaña
+- Diego Torres
+- Walter Vilca
 
 Dashboard analítico para la cadena de suministro Superstore, construido con
 **FastAPI** + **Plotly** + **PostgreSQL** siguiendo la metodología **Kimball DW/BI**.
