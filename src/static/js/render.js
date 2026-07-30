@@ -329,4 +329,265 @@ const R = {
         </span>
       </div>`;
   },
+
+  /* ═══════════════════════════════════════════════════════════════
+     ML RENDERERS
+     ═══════════════════════════════════════════════════════════════ */
+
+  /* ── RFM KPI cards ────────────────────────────────────────── */
+  mlRfmKpis(container, segments) {
+    const colors = ['var(--neon-blue)', 'var(--neon-green)', 'var(--neon-amber)', 'var(--neon-red)'];
+    container.innerHTML = segments.map((s, i) =>
+      `<div class="kpi-card animate-in" style="--kpi-accent:${colors[i]}">
+        <div class="kpi-label">${s.label}</div>
+        <div class="kpi-value">${s.clientes}</div>
+        <div class="kpi-delta pos" style="color:var(--text-muted);font-size:var(--text-xs)">R:${s.avg_recency_dias}d · F:${s.avg_frequency.toFixed(1)} · M:$${s.avg_monetary_usd.toFixed(0)}</div>
+      </div>`
+    ).join('');
+  },
+
+  /* ── RFM Scatter 3D ──────────────────────────────────────── */
+  mlRfmScatter(el, scatter) {
+    if (!scatter || !scatter.length) return;
+    const clusters = [...new Set(scatter.map(d => d.cluster))];
+    const colors = ['#60A5FA', '#34D399', '#FBBF24', '#F87171', '#A78BFA'];
+    const traces = clusters.map(c => {
+      const pts = scatter.filter(d => d.cluster === c);
+      return {
+        x: pts.map(d => d.recency), y: pts.map(d => d.frequency), z: pts.map(d => d.monetary),
+        mode: 'markers', type: 'scatter3d',
+        name: `Cluster ${c}`,
+        marker: { size: 3, color: colors[c] || '#94A3B8', opacity: 0.7 },
+      };
+    });
+    R.plot(el, { data: traces, layout: { scene: { xaxis: { title: 'Recency' }, yaxis: { title: 'Frequency' }, zaxis: { title: 'Monetary' } }, margin: { l: 0, r: 0, t: 24, b: 0 }, height: 480 } });
+  },
+
+  /* ── RFM Table ───────────────────────────────────────────── */
+  mlRfmTable(container, segments) {
+    let html = `<table><thead><tr><th>Cluster</th><th class="num">Clientes</th><th class="num">Recencia</th><th class="num">Frecuencia</th><th class="num">Monetario</th></tr></thead><tbody>`;
+    segments.forEach(s => { html += `<tr><td style="font-weight:600;color:var(--text-primary)">${s.label}</td><td class="num">${s.clientes}</td><td class="num">${s.avg_recency_dias}d</td><td class="num">${s.avg_frequency.toFixed(2)}</td><td class="num">$${s.avg_monetary_usd.toFixed(2)}</td></tr>`; });
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  },
+
+  /* ── Product Segments KPIs ────────────────────────────────── */
+  mlProdKpis(container, segments) {
+    const colors = ['var(--neon-green)', 'var(--neon-blue)', 'var(--neon-amber)', 'var(--neon-red)'];
+    container.innerHTML = segments.map((s, i) =>
+      `<div class="kpi-card animate-in" style="--kpi-accent:${colors[i]}">
+        <div class="kpi-label">${s.label}</div>
+        <div class="kpi-value">${s.productos}</div>
+        <div class="kpi-delta pos" style="color:var(--text-muted);font-size:var(--text-xs)">V:$${s.avg_sales.toFixed(0)} · M:${s.avg_margin_pct}%</div>
+      </div>`
+    ).join('');
+  },
+
+  /* ── Product Scatter 2D ──────────────────────────────────── */
+  mlProdScatter(el, scatter) {
+    if (!scatter || !scatter.length) return;
+    const clusters = [...new Set(scatter.map(d => d.cluster))];
+    const colors = ['#34D399', '#60A5FA', '#FBBF24', '#F87171', '#A78BFA'];
+    const traces = clusters.map(c => {
+      const pts = scatter.filter(d => d.cluster === c);
+      return {
+        x: pts.map(d => d.sales), y: pts.map(d => d.margin),
+        mode: 'markers', type: 'scatter',
+        name: `Cluster ${c}`,
+        text: pts.map(d => d.producto || ''), hoverinfo: 'text+x+y',
+        marker: { size: 6, color: colors[c] || '#94A3B8', opacity: 0.7 },
+      };
+    });
+    R.plot(el, { data: traces, layout: { xaxis: { title: 'Ventas' }, yaxis: { title: 'Margen' } } });
+  },
+
+  /* ── Product Table ───────────────────────────────────────── */
+  mlProdTable(container, segments) {
+    let html = `<table><thead><tr><th>Cluster</th><th class="num">Productos</th><th class="num">Ventas Prom</th><th class="num">Utilidad Prom</th><th class="num">Margen</th><th class="num">Descuento</th></tr></thead><tbody>`;
+    segments.forEach(s => {     html += `<tr><td style="font-weight:600;color:var(--text-primary)">${s.label}</td><td class="num">${s.productos}</td><td class="num">$${s.avg_sales.toFixed(2)}</td><td class="num">$${s.avg_profit.toFixed(2)}</td><td class="num">${s.avg_margin_pct}%</td><td class="num">${s.avg_discount_pct}%</td></tr>`; });
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  },
+
+  /* ── Profit Segments Heatmap ──────────────────────────────── */
+  mlProfitHeatmap(el, heatmap) {
+    if (!heatmap || !heatmap.length) return;
+    const regions = [...new Set(heatmap.map(d => d.region))];
+    const categories = [...new Set(heatmap.map(d => d.category))];
+    const z = regions.map(r => categories.map(c => {
+      const match = heatmap.find(d => d.region === r && d.category === c);
+      return match ? match.profit : 0;
+    }));
+    R.plot(el, {
+      data: [{
+        z, x: categories, y: regions,
+        type: 'heatmap', colorscale: 'RdBu',
+        hoverongaps: false,
+        text: regions.map(r => categories.map(c => {
+          const match = heatmap.find(d => d.region === r && d.category === c);
+          return match ? `$${match.profit.toFixed(0)}` : '';
+        })),
+        hoverinfo: 'x+y+text',
+      }],
+      layout: { xaxis: { title: 'Categoria' }, yaxis: { title: 'Region' } },
+    });
+  },
+
+  /* ── Profit Segments Table ────────────────────────────────── */
+  mlProfitTable(container, heatmap) {
+    let html = `<table><thead><tr><th>Region</th><th>Categoria</th><th class="num">Utilidad</th><th class="num">Descuento Prom</th></tr></thead><tbody>`;
+    const sorted = [...heatmap].sort((a, b) => b.profit - a.profit);
+    sorted.forEach(s => {
+      const cls = s.profit >= 0 ? '' : 'red';
+      html += `<tr><td>${s.region}</td><td>${s.category}</td><td class="num ${cls}" style="font-weight:600">${s.profit >= 0 ? '' : '-'}$${Math.abs(s.profit).toFixed(2)}</td><td class="num">${s.discount_avg}%</td></tr>`;
+    });
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  },
+
+  /* ── Basket Rules Table ───────────────────────────────────── */
+  mlBasketTable(container, data) {
+    if (!data || !data.rules || !data.rules.length) {
+      container.innerHTML = '<div style="padding:var(--space-6);text-align:center;color:var(--text-muted)">Sin reglas de asociacion encontradas</div>';
+      return;
+    }
+    let html = `<table><thead><tr><th>#</th><th>Antecedente</th><th>Consecuente</th><th class="num">Support</th><th class="num">Confianza</th><th class="num">Lift</th></tr></thead><tbody>`;
+    data.rules.forEach((r, i) => {
+      html += `<tr>
+        <td style="font-family:var(--font-mono);font-size:var(--text-xs);color:var(--text-muted)">${String(i + 1).padStart(2, '0')}</td>
+        <td style="font-weight:500;color:var(--text-primary)">${r.antecedents}</td>
+        <td style="font-weight:500;color:var(--neon-green)">${r.consequents}</td>
+        <td class="num">${r.support}%</td>
+        <td class="num">${r.confidence}%</td>
+        <td class="num" style="font-weight:600;color:${r.lift >= 1.5 ? 'var(--neon-green)' : 'var(--text-primary)'}">${r.lift}</td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  },
+
+  /* ── Forecast KPI cards ──────────────────────────────────── */
+  mlFcstKpis(container, metrics) {
+    const sm = metrics.sales || metrics;
+    const pm = metrics.profit || {};
+    container.innerHTML = [
+      { label: 'R² Ventas', value: (sm.r2 || 0).toFixed(3), accent: 'var(--neon-blue)' },
+      { label: 'MAPE', value: sm.mape_pct || `${(sm.mape || 0).toFixed(1)}%`, accent: 'var(--neon-amber)' },
+      { label: 'Error Prom', value: `$${(sm.mae || 0).toFixed(0)}`, accent: 'var(--neon-cyan)' },
+      { label: 'R² Utilidad', value: (pm.r2 || 0).toFixed(3), accent: 'var(--neon-green)' },
+    ].map((m, i) =>
+      `<div class="kpi-card animate-in" style="--kpi-accent:${m.accent};animation-delay:${i * 80}ms">
+        <div class="kpi-label">${m.label}</div>
+        <div class="kpi-value">${m.value}</div>
+      </div>`
+    ).join('');
+  },
+
+  /* ── Forecast Chart (dual axis) ──────────────────────────── */
+  mlForecast(el, data) {
+    if (!data) return;
+    const hist = data.historical || [];
+    const fc = data.forecast || [];
+    const xKey = hist.length && hist[0].date_label ? 'date_label' : 'period';
+    const traces = [];
+    if (hist.length) {
+      traces.push({
+        x: hist.map(d => d[xKey]), y: hist.map(d => d.sales),
+        type: 'scatter', mode: 'lines+markers',
+        name: 'Ventas (hist)', line: { color: '#60A5FA', width: 2 },
+        marker: { size: 4, color: '#60A5FA' },
+      });
+      traces.push({
+        x: hist.map(d => d[xKey]), y: hist.map(d => d.profit),
+        type: 'scatter', mode: 'lines+markers', yaxis: 'y2',
+        name: 'Utilidad (hist)', line: { color: '#34D399', width: 2 },
+        marker: { size: 4, color: '#34D399' },
+      });
+    }
+    if (fc.length) {
+      traces.push({
+        x: fc.map(d => d[xKey]), y: fc.map(d => d.sales),
+        type: 'scatter', mode: 'lines+markers',
+        name: 'Ventas (pron.)', line: { color: '#60A5FA', width: 2, dash: 'dash' },
+        marker: { size: 5, color: '#60A5FA', symbol: 'diamond' },
+      });
+      traces.push({
+        x: fc.map(d => d[xKey]), y: fc.map(d => d.profit),
+        type: 'scatter', mode: 'lines+markers', yaxis: 'y2',
+        name: 'Utilidad (pron.)', line: { color: '#34D399', width: 2, dash: 'dash' },
+        marker: { size: 5, color: '#34D399', symbol: 'diamond' },
+      });
+    }
+    R.plot(el, {
+      data: traces,
+      layout: {
+        yaxis: { title: 'Ventas ($)' },
+        yaxis2: { title: 'Utilidad ($)', overlaying: 'y', side: 'right' },
+      },
+    });
+  },
+
+  /* ── Predictor Info ──────────────────────────────────────── */
+  mlPredictorInfo(container, info) {
+    const r2 = info.r2 || 0;
+    container.innerHTML = `
+      <div class="callout-icon info">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+      </div>
+      <div class="callout-body">
+        <b>Predictor de Utilidad</b>
+        <span>Modelo de regresion lineal entrenado sobre los datos historicos del negocio.
+        R² = <strong>${r2.toFixed(3)}</strong>${r2 < 0.3 ? ' (bajo — la utilidad tiene alta varianza, pero las tendencias generales son utiles)' : r2 < 0.6 ? ' (moderado — las predicciones orientan correctamente)' : ' (bueno — el modelo explica bien la utilidad)'}.
+        Ajusta los parametros en vivo — la prediccion se actualiza automaticamente al mover cualquier control.</span>
+      </div>`;
+  },
+
+  /* ── Predictor Result (gauge) ────────────────────────────── */
+  mlPredictorResult(container, result) {
+    const profit = result.predicted_profit || 0;
+    const isPos = profit >= 0;
+    const range = Math.max(Math.abs(profit) * 1.5, 200);
+    const pct = ((profit / range) * 50 + 50);
+    const clampedPct = Math.max(4, Math.min(96, pct));
+    const badgeCls = isPos ? 'gauge-badge-pos' : 'gauge-badge-neg';
+    const badgeIcon = isPos
+      ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>'
+      : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+    container.innerHTML = `
+      <div class="predictor-gauge animate-in">
+        <div class="gauge-header">
+          <span class="gauge-label">Utilidad Estimada</span>
+          <span class="gauge-value ${isPos ? 'pos' : 'neg'}">${isPos ? '+' : '-'}$${Math.abs(profit).toFixed(2)}</span>
+        </div>
+        <div class="gauge-track">
+          <div class="gauge-fill" style="width:${clampedPct}%;background:${isPos ? 'var(--neon-green)' : 'var(--neon-red)'}"></div>
+          <div class="gauge-zero"></div>
+        </div>
+        <div class="gauge-labels">
+          <span class="gauge-label-end">Perdida</span>
+          <span class="gauge-label-mid">$0</span>
+          <span class="gauge-label-end">Ganancia</span>
+        </div>
+        <div class="${badgeCls}">${badgeIcon} ${isPos ? 'Rentable' : 'No Rentable'}</div>
+        <div class="gauge-meta">R² modelo: ${(result.model_r2 || 0).toFixed(3)}</div>
+      </div>`;
+  },
+
+  /* ── Feature Importance Bars ──────────────────────────────── */
+  mlFeatureImportance(el, features) {
+    if (!features || !features.length) { el.innerHTML = ''; return; }
+    const sorted = [...features].sort((a, b) => Math.abs(b.importance) - Math.abs(a.importance));
+    const maxAbs = Math.max(...sorted.map(f => Math.abs(f.importance)), 1);
+    el.innerHTML = '<div class="section-header"><div class="section-label">Importancia de Factores</div></div><div class="chart-card" style="padding:var(--space-4)">' +
+      sorted.map(f => {
+        const pct = (Math.abs(f.importance) / maxAbs * 100).toFixed(0);
+        const cls = f.importance >= 0 ? '' : 'neg';
+        return `<div class="feature-bar">
+          <span class="lbl">${f.feature}</span>
+          <span class="bar ${cls}" style="width:${pct}%"></span>
+          <span class="val">${f.importance >= 0 ? '+' : ''}${f.importance.toFixed(4)}</span>
+        </div>`;
+      }).join('') +
+    '</div>';
+  },
 };

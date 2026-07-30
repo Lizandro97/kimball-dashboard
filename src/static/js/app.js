@@ -162,6 +162,7 @@ const APP = {
       profitability: 'Analisis de Rentabilidad',
       customers: 'Analisis de Clientes',
       shipping: 'Analisis de Envios',
+      ml: 'Análisis Predictivo',
     };
 
     this.state.page = page;
@@ -260,6 +261,10 @@ const APP = {
           R.plot(document.getElementById('chartShipHistogram'), d.chart_histogram);
           break;
         }
+        case 'ml': {
+          this._loadMl();
+          break;
+        }
       }
     } catch (err) {
       console.error('Error loading page:', err);
@@ -267,6 +272,112 @@ const APP = {
     } finally {
       this.state.loading = false;
       this.hideLoading();
+    }
+  },
+
+  /* ── ML Tab Panel ────────────────────────────────────────── */
+  _activeMlTab: 'rfm',
+
+  async _loadMl() {
+    document.querySelectorAll('.ml-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const ml = tab.dataset.ml;
+        this._activeMlTab = ml;
+        document.querySelectorAll('.ml-tab').forEach(t => t.classList.toggle('active', t.dataset.ml === ml));
+        document.querySelectorAll('.ml-panel').forEach(p => p.classList.toggle('active', p.dataset.ml === ml));
+        this._loadMlPanel(ml);
+      });
+    });
+    // Load predictor model info on first visit
+    try {
+      const info = await API.profitPredictInfo();
+      R.mlPredictorInfo(document.getElementById('predictorInfo'), info);
+    } catch (_) {}
+    // Live prediction — update on any input change with debounce
+    const predEls = document.querySelectorAll('#predSales, #predDiscount, #predQty, #predCategory, #predRegion, #predSegment, #predShip, #predMonth');
+    let predTimer;
+    const trigger = () => { clearTimeout(predTimer); predTimer = setTimeout(() => this._predictProfit(), 300); };
+    predEls.forEach(el => el.addEventListener('input', trigger));
+    predEls.forEach(el => el.addEventListener('change', trigger));
+    // Update slider value labels live
+    document.getElementById('predSales')?.addEventListener('input', function () {
+      document.getElementById('predSalesVal').textContent = '$' + Number(this.value).toLocaleString();
+    });
+    document.getElementById('predDiscount')?.addEventListener('input', function () {
+      document.getElementById('predDiscountVal').textContent = Math.round(this.value * 100) + '%';
+    });
+    document.getElementById('predQty')?.addEventListener('input', function () {
+      document.getElementById('predQtyVal').textContent = this.value;
+    });
+    // Initial predict to fill the gauge
+    this._predictProfit();
+    // Load first tab
+    this._loadMlPanel('rfm');
+  },
+
+  async _loadMlPanel(panel) {
+    try {
+      switch (panel) {
+        case 'rfm': {
+          const d = await API.rfm();
+          R.mlRfmKpis(document.getElementById('mlRfmKpis'), d.segments);
+          R.mlRfmScatter(document.getElementById('chartRfmScatter'), d.scatter);
+          R.mlRfmTable(document.getElementById('mlRfmTable'), d.segments);
+          break;
+        }
+        case 'products': {
+          const d = await API.mlProducts();
+          R.mlProdKpis(document.getElementById('mlProdKpis'), d.segments);
+          R.mlProdScatter(document.getElementById('chartProdScatter'), d.scatter);
+          R.mlProdTable(document.getElementById('mlProdTable'), d.segments);
+          break;
+        }
+        case 'profit': {
+          const d = await API.profitSegments();
+          R.mlProfitHeatmap(document.getElementById('chartProfitHeatmap'), d.heatmap);
+          R.mlProfitTable(document.getElementById('mlProfitTable'), d.heatmap);
+          break;
+        }
+        case 'basket': {
+          const d = await API.basket(0.008, 1.0);
+          document.getElementById('basketSubtitle').textContent = `${d.total_rules} reglas encontradas · min_support=0.008 · min_lift=1.0`;
+          R.mlBasketTable(document.getElementById('mlBasketTable'), d);
+          break;
+        }
+        case 'forecast': {
+          const d = await API.forecast(6);
+          R.mlFcstKpis(document.getElementById('mlFcstKpis'), d.metrics);
+          R.mlForecast(document.getElementById('chartForecast'), d);
+          break;
+        }
+        case 'predictor': {
+          const d = await API.profitPredict(500, 0.1, 2, 'Technology', 'West', 'Consumer', 'Standard Class', 7);
+          R.mlPredictorResult(document.getElementById('predResult'), d);
+          R.mlFeatureImportance(document.getElementById('chartPredImportance'), d.features);
+          break;
+        }
+      }
+    } catch (err) {
+      console.error('Error loading ML panel:', err);
+      this.toast('Error cargando datos ML.', 'error', 5000);
+    }
+  },
+
+  async _predictProfit() {
+    const sales = document.getElementById('predSales')?.value || 500;
+    const discount = document.getElementById('predDiscount')?.value || 0.1;
+    const qty = document.getElementById('predQty')?.value || 2;
+    const cat = document.getElementById('predCategory')?.value || 'Technology';
+    const reg = document.getElementById('predRegion')?.value || 'West';
+    const seg = document.getElementById('predSegment')?.value || 'Consumer';
+    const ship = document.getElementById('predShip')?.value || 'Standard Class';
+    const month = document.getElementById('predMonth')?.value || 7;
+    try {
+      const d = await API.profitPredict(sales, discount, qty, cat, reg, seg, ship, month);
+      R.mlPredictorResult(document.getElementById('predResult'), d);
+      R.mlFeatureImportance(document.getElementById('chartPredImportance'), d.features);
+    } catch (err) {
+      this.toast('Error al predecir utilidad.', 'error', 5000);
     }
   },
 };

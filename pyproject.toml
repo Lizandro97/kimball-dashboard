@@ -7,6 +7,7 @@ requires-python = ">=3.13"
 dependencies = [
     "fastapi>=0.140.7",
     "matplotlib>=3.11.1",
+    "mlxtend>=0.25.0",
     "numpy>=2.5.1",
     "openpyxl>=3.1.5",
     "pandas>=3.0.5",
@@ -14,6 +15,7 @@ dependencies = [
     "plotly>=6.9.0",
     "psycopg2-binary>=2.9.12",
     "python-dotenv>=1.2.2",
+    "scikit-learn>=1.9.0",
     "sqlalchemy>=2.0.51",
     "uvicorn>=0.51.0",
 ]

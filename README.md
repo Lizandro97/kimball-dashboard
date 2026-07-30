@@ -1,7 +1,59 @@
 # Superstore BI Dashboard
 
+**Grupo 5**
+
+| Integrante           | Rol |
+| -------------------- | --- |
+| Azul Huilahuaña      | —   |
+| Lizandro Mendoza     | —   |
+| Diego Torres         | —   |
+| Walter Vilca         | —   |
+
 Dashboard analítico para la cadena de suministro Superstore, construido con
 **FastAPI** + **Plotly** + **PostgreSQL** siguiendo la metodología **Kimball DW/BI**.
+Incluye **6 módulos de análisis** y un módulo de **Machine Learning** con 6 paneles
+predictivos (clustering, asociación, regresión, forecast).
+
+---
+
+## Capturas de pantalla
+
+### Overview
+![Overview](screenshots/01-overview.png)
+
+### Ventas
+![Ventas](screenshots/02-ventas.png)
+
+### Rentabilidad
+![Rentabilidad](screenshots/03-rentabilidad.png)
+
+### Clientes
+![Clientes](screenshots/04-clientes.png)
+
+### Envíos
+![Envíos](screenshots/05-envios.png)
+
+### Análisis Predictivo (ML)
+
+#### RFM — Segmentación de clientes
+![RFM](screenshots/06-ml-rfm.png)
+
+#### Productos — Clustering de productos
+![Productos](screenshots/07-ml-products.png)
+
+#### Rentabilidad — Mapa de calor Región × Categoría
+![Rentabilidad](screenshots/08-ml-profit.png)
+
+#### Market Basket — Reglas de asociación (Apriori)
+![Market Basket](screenshots/09-ml-basket.png)
+
+#### Pronóstico — Forecast dual ventas + utilidad
+![Pronóstico](screenshots/10-ml-forecast.png)
+
+#### Predictor de Utilidad — Predicción en vivo con sliders
+![Predictor](screenshots/11-ml-predictor.png)
+
+---
 
 ## Stack
 
@@ -12,6 +64,7 @@ Dashboard analítico para la cadena de suministro Superstore, construido con
 | BD         | PostgreSQL 16                  |
 | Charts     | Plotly.js                      |
 | ETL        | Pandas, SQLAlchemy             |
+| ML         | scikit-learn, mlxtend          |
 | Export     | OpenPyXL (Excel `.xlsx`)       |
 
 ## Requisitos
@@ -23,11 +76,11 @@ Dashboard analítico para la cadena de suministro Superstore, construido con
 
 ```powershell
 # 1. Clonar el repositorio
-git clone <url-del-repo>
-cd Superstore/dashboard
+git clone https://github.com/Lizandro97/kimball-dashboard.git
+cd kimball-dashboard
 
 # 2. Iniciar todo (PostgreSQL + dashboard + ETL automático)
-docker compose up
+docker compose up -d
 ```
 
 El primer arranque:
@@ -60,7 +113,7 @@ docker compose build
 ## Arquitectura del proyecto
 
 ```
-Superstore/dashboard/
+dashboard/
 ├── data/
 │   └── super-store.csv        # Dataset CSV original
 ├── db/
@@ -75,48 +128,61 @@ Superstore/dashboard/
 ├── src/
 │   ├── api/
 │   │   ├── app.py             # FastAPI app + lifespan
-│   │   ├── routes/            # Endpoints: overview, sales, profitability, customers, shipping, export
-│   │   └── services/          # Lógica de negocio + gráficos
-│   ├── components/
-│   │   └── charts.py          # Funciones de generación de gráficos Plotly
+│   │   ├── routes/
+│   │   │   ├── overview.py, sales.py, profitability.py, customers.py, shipping.py, export.py
+│   │   │   └── ml.py          # 7 endpoints ML
+│   │   └── services/
+│   ├── ml/
+│   │   ├── clustering/
+│   │   │   ├── rfm.py               # RFM K-Means
+│   │   │   ├── product_clusters.py   # Product clustering
+│   │   │   └── profit_segments.py    # Profitability heatmap
+│   │   ├── association/
+│   │   │   └── market_basket.py      # Apriori
+│   │   └── regression/
+│   │       ├── sales_forecast.py     # Forecast dual ventas+utilidad
+│   │       └── profit_predictor.py   # Predictor transaccional
 │   └── static/
 │       ├── index.html         # SPA
-│       ├── css/style.css      # Estilos
-│       └── js/                # app.js (controlador SPA), render.js (Plotly), api.js (fetch)
+│       ├── css/style.css      # Estilos (tema oscuro)
+│       └── js/                # app.js, render.js, api.js
 ├── Dockerfile
 ├── docker-compose.yml
-├── pyproject.toml
 └── README.md
 ```
 
 ## Ejecución local (sin Docker)
-
-Si prefieres ejecutar sin Docker (solo Linux/macOS):
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e .
 
-# Configurar variables de entorno
 cp .env.example .env
 # Editar .env con tu conexión PostgreSQL
 
-# Crear base de datos y cargar datos
 python -m etl.run
-
-# Iniciar servidor
 uvicorn src.api.app:app --host 0.0.0.0 --port 8000
 ```
 
-## Módulos del dashboard
+## Módulos del Dashboard
 
-| Ruta              | Módulo            | KPIs principales               |
-| ----------------- | ----------------- | ------------------------------ |
-| `/`               | Overview          | Ventas totales, profit, órdenes |
-| `/ventas`         | Ventas            | Ventas por categoría, tendencias |
-| `/rentabilidad`   | Rentabilidad      | Profit por producto/región      |
-| `/clientes`       | Clientes          | Top clientes, segmentación      |
-| `/envios`         | Envíos            | Ship modes, tiempos de entrega  |
+| Ruta              | Módulo            | KPIs principales                     |
+| ----------------- | ----------------- | ------------------------------------ |
+| `/#overview`      | Overview          | Ventas totales, profit, órdenes      |
+| `/#ventas`        | Ventas            | Ventas por categoría, tendencias     |
+| `/#rentabilidad`  | Rentabilidad      | Profit por producto/región           |
+| `/#clientes`      | Clientes          | Top clientes, segmentación           |
+| `/#envios`        | Envíos            | Ship modes, tiempos de entrega       |
+| `/#ml`            | Análisis Predictivo | RFM, clusters, forecast, predictor |
 
-Cada módulo incluye filtros (Región, Año, Segmento) y exportación a Excel.
+## Módulo de Machine Learning
+
+| Panel               | Algoritmo                | Output clave                          |
+| ------------------- | ------------------------ | ------------------------------------- |
+| RFM                 | K-Means (4 clusters)     | Segmentación por recencia/frecuencia  |
+| Productos           | K-Means (4 clusters)     | Estrella / Volumen / Potencial / Lastre |
+| Rentabilidad        | K-Means                  | Heatmap Región × Categoría            |
+| Market Basket       | Apriori                  | Reglas de asociación (20 reglas)      |
+| Pronóstico          | Regresión Lineal         | Forecast dual ventas + utilidad       |
+| Predictor           | Regresión Lineal         | Utilidad estimada por transacción     |

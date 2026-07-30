@@ -10,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy import func, select
 
 from api.error_handlers import register_error_handlers
-from api.routes import customers, export, overview, profitability, sales, shipping
+from api.routes import customers, export, ml, overview, profitability, sales, shipping
 from api.services.chart_service import load_data
 from core.config import settings
 from db.engine import get_engine
@@ -33,6 +33,7 @@ app.include_router(profitability.router, prefix="/api")
 app.include_router(customers.router, prefix="/api")
 app.include_router(shipping.router, prefix="/api")
 app.include_router(export.router, prefix="/api")
+app.include_router(ml.router, prefix="/api")
 
 
 @app.get("/api/health")

@@ -67,6 +67,16 @@
             </span>
             <span class="nav-label">Envios</span>
           </a>
+
+          <!-- ── Separador ───────────────────────────────── -->
+          <div class="nav-sep"></div>
+
+          <a class="nav-item" href="#ml" data-page="ml">
+            <span class="nav-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10h-10V2z"/><path d="M22 12a10 10 0 0 0-10-10v10h10z"/></svg>
+            </span>
+            <span class="nav-label">Análisis Predictivo</span>
+          </a>
         </nav>
 
         <div class="sidebar-footer">
@@ -376,6 +386,172 @@
             <div class="section-label">Distribución de Tiempos de Entrega</div>
           </div>
           <div class="chart-card" id="chartShipHistogram"></div>
+        </div>
+
+        <!-- ── Reportes ML ────────────────────────────────────── -->
+        <div class="page" id="page-ml">
+          <h1 class="page-title-main">Análisis Predictivo</h1>
+          <p class="page-subtitle">Segmentacion, asociacion y prediccion</p>
+
+          <div class="ml-tabs" id="mlTabs">
+            <button class="ml-tab active" data-ml="rfm">RFM</button>
+            <button class="ml-tab" data-ml="products">Productos</button>
+            <button class="ml-tab" data-ml="profit">Rentabilidad</button>
+            <button class="ml-tab" data-ml="basket">Canasta</button>
+            <button class="ml-tab" data-ml="forecast">Pronostico</button>
+            <button class="ml-tab" data-ml="predictor">Predictor</button>
+          </div>
+
+          <div id="mlContent">
+
+            <!-- RFM -->
+            <div class="ml-panel active" data-ml="rfm">
+              <div class="section-header"><div class="section-label">Segmentacion RFM</div></div>
+              <div class="callout ml-explanation">
+                <div class="callout-icon info">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                </div>
+                <div class="callout-body">
+                  <b>¿Que significa?</b>
+                  <span>Agrupa clientes segun su comportamiento de compra. <strong>VIP</strong> = compran seguido y gastan mucho (prioridad absoluta). <strong>Perdidos</strong> = no compran hace tiempo (campaña de recuperacion). Util para segmentar marketing y priorizar retencion.</span>
+                </div>
+              </div>
+              <div class="kpi-grid" id="mlRfmKpis"></div>
+              <div class="chart-card" id="chartRfmScatter"></div>
+              <div class="table-card" id="mlRfmTable"></div>
+            </div>
+
+            <!-- Product Clusters -->
+            <div class="ml-panel" data-ml="products">
+              <div class="section-header"><div class="section-label">Clusters de Productos</div></div>
+              <div class="callout ml-explanation">
+                <div class="callout-icon info">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                </div>
+                <div class="callout-body">
+                  <b>¿Que significa?</b>
+                  <span><strong>Estrella</strong> = altas ventas + alto margen (proteger y promover). <strong>Volumen</strong> = muchas ventas, margen moderado (mantener stock). <strong>Potencial</strong> = pocas ventas pero buen margen (oportunidad de crecimiento). <strong>Lastre</strong> = bajas ventas y bajo margen (revisar precio o descontinuar).</span>
+                </div>
+              </div>
+              <div class="kpi-grid" id="mlProdKpis"></div>
+              <div class="chart-card" id="chartProdScatter"></div>
+              <div class="table-card" id="mlProdTable"></div>
+            </div>
+
+            <!-- Profit Segments -->
+            <div class="ml-panel" data-ml="profit">
+              <div class="section-header"><div class="section-label">Segmentos de Rentabilidad</div></div>
+              <div class="callout ml-explanation">
+                <div class="callout-icon info">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                </div>
+                <div class="callout-body">
+                  <b>¿Que significa?</b>
+                  <span>Muestra la rentabilidad de cada combinacion Region × Categoria. Rojo = perdida, azul = ganancia. Util para decidir donde enfocar inventario, ajustar precios y reducir descuentos agresivos en segmentos no rentables.</span>
+                </div>
+              </div>
+              <div class="chart-card" id="chartProfitHeatmap"></div>
+              <div class="table-card" id="mlProfitTable"></div>
+            </div>
+
+            <!-- Market Basket -->
+            <div class="ml-panel" data-ml="basket">
+              <div class="section-header"><div class="section-label">Reglas de Asociacion (Canasta de Compra)</div></div>
+              <div class="callout ml-explanation">
+                <div class="callout-icon info">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                </div>
+                <div class="callout-body">
+                  <b>¿Que significa?</b>
+                  <span>Muestra que subcategorias se compran juntas frecuentemente. <strong>Lift</strong> > 1 indica que la asociacion es mas fuerte que el azar. Util para <strong>cross-selling</strong> (recomendar productos relacionados), ubicacion en tienda y promociones combinadas.</span>
+                </div>
+              </div>
+              <p class="page-subtitle" id="basketSubtitle">min_support=0.008 · min_lift=1.0 · Subcategorias</p>
+              <div class="table-card" id="mlBasketTable"></div>
+            </div>
+
+            <!-- Forecast -->
+            <div class="ml-panel" data-ml="forecast">
+              <div class="section-header"><div class="section-label">Pronostico de Ventas y Utilidad</div></div>
+              <div class="callout ml-explanation">
+                <div class="callout-icon info">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                </div>
+                <div class="callout-body">
+                  <b>¿Que significa?</b>
+                  <span>Pronostica <strong>ventas</strong> (azul, eje izq.) y <strong>utilidad</strong> (verde, eje der.) mensual para los proximos 6 meses. La linea segmentada muestra la prediccion. Cada modelo tiene su propio <strong>R²</strong> — util para planificar inventario, presupuesto y metas de rentabilidad.</span>
+                </div>
+              </div>
+              <div class="kpi-grid" id="mlFcstKpis"></div>
+              <div class="chart-card" id="chartForecast"></div>
+            </div>
+
+            <!-- Profit Predictor -->
+            <div class="ml-panel" data-ml="predictor">
+              <div class="section-header"><div class="section-label">Predictor de Utilidad</div></div>
+              <div class="callout" id="predictorInfo"></div>
+              <div class="predictor-form">
+                <div class="slider-grid">
+                  <div class="slider-group">
+                    <span class="filter-label">Ventas ($)</span>
+                    <div class="slider-row">
+                      <input type="range" id="predSales" min="0" max="10000" value="500" step="10" />
+                      <span class="slider-value" id="predSalesVal">$500</span>
+                    </div>
+                  </div>
+                  <div class="slider-group">
+                    <span class="filter-label">Descuento</span>
+                    <div class="slider-row">
+                      <input type="range" id="predDiscount" min="0" max="0.8" value="0.1" step="0.01" />
+                      <span class="slider-value" id="predDiscountVal">10%</span>
+                    </div>
+                  </div>
+                  <div class="slider-group">
+                    <span class="filter-label">Cantidad</span>
+                    <div class="slider-row">
+                      <input type="range" id="predQty" min="1" max="50" value="2" step="1" />
+                      <span class="slider-value" id="predQtyVal">2</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="filter-bar">
+                  <div class="filter-group">
+                    <span class="filter-label">Categoria</span>
+                    <select id="predCategory">
+                      <option>Technology</option><option selected>Furniture</option><option>Office Supplies</option>
+                    </select>
+                  </div>
+                  <div class="filter-group">
+                    <span class="filter-label">Region</span>
+                    <select id="predRegion">
+                      <option selected>West</option><option>East</option><option>Central</option><option>South</option>
+                    </select>
+                  </div>
+                  <div class="filter-group">
+                    <span class="filter-label">Segmento</span>
+                    <select id="predSegment">
+                      <option selected>Consumer</option><option>Corporate</option><option>Home Office</option>
+                    </select>
+                  </div>
+                  <div class="filter-group">
+                    <span class="filter-label">Envio</span>
+                    <select id="predShip">
+                      <option selected>Standard Class</option><option>Second Class</option><option>First Class</option><option>Same Day</option>
+                    </select>
+                  </div>
+                  <div class="filter-group">
+                    <span class="filter-label">Mes</span>
+                    <select id="predMonth">
+                      <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option><option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option><option value="7" selected>Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div id="predResult"></div>
+              <div class="chart-card" id="chartPredImportance"></div>
+            </div>
+
+          </div>
         </div>
 
       </div>
